@@ -205,7 +205,6 @@ export default {
         content: "",
         category: ["マニュアル"],
         categoryDetail: ["VUE"],
-        deletedAt: null,
       };
       this.dialogEdit = true;
     },

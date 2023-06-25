@@ -49,7 +49,10 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          
+          <v-btn color="blue darken-1" text @click="closeDialogEdit"
+            >キャンセル</v-btn
+          >
+          <v-btn color="blue darken-1" text @click="saveDialogEdit">保存</v-btn>
           <v-spacer />
         </v-card-actions>
       </v-card>
@@ -119,33 +122,91 @@ export default {
     },
   },
   async mounted() {
-    this.isLoading = true;
-    const response = await axios
-      .get("https://takamori-c.microcms.io/api/v1/favorites", {
-        headers: {
-          "X-MICROCMS-API-KEY": process.env.VUE_APP_X_MICROCMS_API_KEY,
-        },
-      })
-      .then((res) => {
-        res.data.contents.forEach((data) => {
-          data.categoryView = data.category + " - " + data.categoryDetail;
-          data.completeView = data.complete ? "済" : "";
-        });
-        return res;
-      })
-      .catch((e) => {
-        this.errors = e;
-      })
-      .finally(() => {
-        this.isLoading = false;
-      });
-    this.items = response.data.contents;
-    return response;
+    await this.getItems();
   },
   methods: {
+    async getItems() {
+      this.isLoading = true;
+      const filter = "filters=deletedAt[not_exists]";
+      const response = await axios
+        .get("https://takamori-c.microcms.io/api/v1/favorites?" + filter, {
+          headers: {
+            "X-MICROCMS-API-KEY": process.env.VUE_APP_X_MICROCMS_API_KEY,
+          },
+        })
+        .then((res) => {
+          res.data.contents.forEach((data) => {
+            data.categoryView = data.category + " - " + data.categoryDetail;
+            data.completeView = data.complete ? "済" : "";
+          });
+          return res;
+        })
+        .catch((e) => {
+          self.errors = e;
+        })
+        .finally(() => {
+          self.isLoading = false;
+        });
+      this.items = response.data.contents;
+      return response;
+    },
+    async postItems() {
+      this.isLoading = true;
+      const self = this;
+      await axios
+        .post(
+          "https://takamori-c.microcms.io/api/v1/favorites",
+          this.editItem,
+          {
+            headers: {
+              "X-MICROCMS-API-KEY": process.env.VUE_APP_X_MICROCMS_API_KEY,
+            },
+          }
+        )
+        .catch(function (e) {
+          self.errors = e;
+        })
+        .finally(() => {
+          self.isLoading = false;
+        });
+    },
+    async patchItems() {
+      this.isLoading = true;
+      const self = this;
+      const params = {
+        title: this.editItem.title,
+        content: this.editItem.content,
+        category: this.editItem.category,
+        categoryDetail: this.editItem.categoryDetail,
+        deletedAt: this.editItem.deletedAt,
+      };
+      await axios
+        .patch(
+          "https://takamori-c.microcms.io/api/v1/favorites/" + self.editItem.id,
+          params,
+          {
+            headers: {
+              "X-MICROCMS-API-KEY": process.env.VUE_APP_X_MICROCMS_API_KEY,
+            },
+          }
+        )
+        .catch(function (e) {
+          self.errors = e;
+        })
+        .finally(() => {
+          self.isLoading = false;
+        });
+      this.isLoading = false;
+    },
     addItem() {
       this.editIndex = -1;
-      this.editItem = {};
+      this.editItem = {
+        title: "test",
+        content: "",
+        category: ["マニュアル"],
+        categoryDetail: ["VUE"],
+        deletedAt: null,
+      };
       this.dialogEdit = true;
     },
     updateItem(item) {
@@ -156,14 +217,30 @@ export default {
     deleteItem(item) {
       this.editIndex = this.items.indexOf(item);
       this.editItem = Object.assign({}, item);
+      this.editItem.deletedAt = new Date();
       this.dialogDelete = true;
     },
     closeDialogDelete() {
       this.dialogDelete = false;
     },
-    deleteItemAction() {
+    async deleteItemAction() {
       this.items.splice(this.editIndex, 1);
+      await this.patchItems();
       this.closeDialogDelete();
+    },
+    closeDialogEdit() {
+      this.dialogEdit = false;
+    },
+    async saveDialogEdit() {
+      if (this.editIndex > -1) {
+        Object.assign(this.items[this.editIndex], this.editItem);
+        await this.patchItems();
+      } else {
+        this.items.push(this.editItem);
+        await this.postItems();
+      }
+      await this.getItems();
+      this.closeDialogEdit();
     },
   },
 };

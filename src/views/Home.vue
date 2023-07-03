@@ -13,8 +13,16 @@
         </v-toolbar>
       </template>
       <template v-slot:item.actions="{ item }">
-        <v-icon small class="mr-2" @click="updateItem(item)">mdi-pencil</v-icon>
-        <v-icon small @click="deleteItem(item)">mdi-delete</v-icon>
+        <v-row>
+          <v-col cols="6">
+            <v-icon small class="mr-2" @click="updateItem(item)"
+              >mdi-pencil</v-icon
+            >
+          </v-col>
+          <v-col cols="6">
+            <v-icon small @click="deleteItem(item)">mdi-delete</v-icon>
+          </v-col>
+        </v-row>
       </template>
     </v-data-table>
     <v-dialog v-model="dialogDelete" max-width="500px">
@@ -32,18 +40,65 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-dialog v-model="dialogEdit" max-width="500px">
+    <v-dialog v-model="dialogEdit" max-width="90%">
       <v-card>
         <v-card-title>
           <span class="text-h5">{{ dialogTitle }}</span>
         </v-card-title>
         <v-card-text>
           <v-row>
-            <v-col cols="12">
+            <v-col cols="6">
               <v-text-field
                 v-model="editItem.title"
                 label="タイトル"
               ></v-text-field>
+            </v-col>
+            <v-col cols="3">
+              <v-select
+                v-model="editItem.category"
+                label="カテゴリ"
+                item-text="name"
+                item-value="name"
+                :items="categoryItems"
+              ></v-select>
+            </v-col>
+            <v-col cols="3">
+              <v-select
+                v-model="editItem.categoryDetail"
+                label="カテゴリ詳細"
+                item-text="name"
+                item-value="name"
+                :items="categoryDetailItems"
+              ></v-select>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col>
+              <mavon-editor
+                v-model="editItem.content"
+                style="height: 100%"
+                language="ja"
+              ></mavon-editor>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col>
+              <mavon-editor
+                v-model="editItem.contentHtml"
+                style="height: 600px"
+                language="ja"
+                @change="changeEditor"
+              ></mavon-editor>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col>
+              {{ mdText }}
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col>
+              <div v-html="htmlText" />
             </v-col>
           </v-row>
         </v-card-text>
@@ -64,11 +119,18 @@
 // @ is an alias to /src
 // import HelloWorld from "@/components/HelloWorld.vue";
 
+import Vue from "vue";
 import axios from "axios";
+import constants from "../common/constants";
+import mavonEditor from "mavon-editor";
+import "mavon-editor/dist/css/index.css";
+Vue.use(mavonEditor);
+
 export default {
   name: "Home",
   components: {
     // HelloWorld,
+    //mavonEditor,
   },
   data: () => ({
     isLoading: false,
@@ -78,6 +140,10 @@ export default {
     dialogDelete: false,
     editIndex: -1,
     editItem: {},
+    categoryItems: constants.categoryItems,
+    categoryDetailItems: constants.categoryDetailItems,
+    mdText: "",
+    htmlText: "",
     headers: [
       {
         text: "ステータス",
@@ -95,16 +161,10 @@ export default {
         text: "タイトル",
         value: "title",
         align: "left",
-        width: "400px",
+        width: "700px",
       },
       {
-        text: "登録日",
-        value: "createdAt",
-        align: "center",
-        width: "250px",
-      },
-      {
-        text: "更新日",
+        text: "更新日時",
         value: "updatedAt",
         align: "center",
         width: "250px",
@@ -136,6 +196,8 @@ export default {
         })
         .then((res) => {
           res.data.contents.forEach((data) => {
+            data.category = data.category[0];
+            data.categoryDetail = data.categoryDetail[0];
             data.categoryView = data.category + " - " + data.categoryDetail;
             data.completeView = data.complete ? "済" : "";
           });
@@ -176,8 +238,9 @@ export default {
       const params = {
         title: this.editItem.title,
         content: this.editItem.content,
-        category: this.editItem.category,
-        categoryDetail: this.editItem.categoryDetail,
+        contentHtml: this.editItem.contentHtml,
+        category: [this.editItem.category],
+        categoryDetail: [this.editItem.categoryDetail],
         deletedAt: this.editItem.deletedAt,
       };
       await axios
@@ -240,6 +303,10 @@ export default {
       }
       await this.getItems();
       this.closeDialogEdit();
+    },
+    changeEditor(value, render) {
+      this.mdText = value;
+      this.htmlText = render;
     },
   },
 };

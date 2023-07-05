@@ -47,13 +47,13 @@
         </v-card-title>
         <v-card-text>
           <v-row>
-            <v-col cols="6">
+            <v-col cols="12" sm="6">
               <v-text-field
                 v-model="editItem.title"
                 label="タイトル"
               ></v-text-field>
             </v-col>
-            <v-col cols="3">
+            <v-col cols="12" sm="3">
               <v-select
                 v-model="editItem.category"
                 label="カテゴリ"
@@ -62,7 +62,7 @@
                 :items="categoryItems"
               ></v-select>
             </v-col>
-            <v-col cols="3">
+            <v-col cols="12" sm="3">
               <v-select
                 v-model="editItem.categoryDetail"
                 label="カテゴリ詳細"
@@ -78,6 +78,7 @@
                 v-model="editItem.content"
                 style="height: 100%"
                 language="ja"
+                defaultOpen="other"
               ></mavon-editor>
             </v-col>
           </v-row>
@@ -88,6 +89,7 @@
                 style="height: 600px"
                 language="ja"
                 @change="changeEditor"
+                defaultOpen="other"
               ></mavon-editor>
             </v-col>
           </v-row>

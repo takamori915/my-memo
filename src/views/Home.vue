@@ -217,10 +217,17 @@ export default {
     async postItems() {
       this.isLoading = true;
       const self = this;
+      const params = {
+        title: this.editItem.title,
+        content: this.editItem.content,
+        contentHtml: this.editItem.contentHtml,
+        category: [this.editItem.category],
+        categoryDetail: [this.editItem.categoryDetail],
+      };
       await axios
         .post(
           "https://takamori-c.microcms.io/api/v1/favorites",
-          this.editItem,
+          params,
           {
             headers: {
               "X-MICROCMS-API-KEY": process.env.VUE_APP_X_MICROCMS_API_KEY,

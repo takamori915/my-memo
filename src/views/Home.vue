@@ -2,7 +2,13 @@
   <div class="home">
     <!-- <img alt="Vue logo" src="../assets/logo.png" /> -->
     <!-- <HelloWorld msg="Welcome to Your Vue.js App" /> -->
-    <v-data-table :headers="headers" :items="items">
+    <v-data-table
+      :headers="headers"
+      :items="items"
+      hide-default-header
+      hide-default-footer
+      @click:row="updateItem"
+    >
       <template v-slot:top>
         <v-toolbar flat>
           <v-toolbar-title>メモ一覧</v-toolbar-title>
@@ -11,10 +17,21 @@
             >メモを追加</v-btn
           >
         </v-toolbar>
+        <v-divider />
+      </template>
+      <template v-slot:item.title="{ item }">
+        <v-row>
+          <v-col cols="10" sm="11" class="text-left">
+            {{ item.title }}
+          </v-col>
+          <v-col cols="2" sm="1" class="text-center" @click.stop>
+            <v-icon small @click="deleteItem(item)">mdi-delete</v-icon>
+          </v-col>
+        </v-row>
       </template>
       <template v-slot:item.actions="{ item }">
         <v-row>
-          <v-col cols="6">
+          <v-col class="text-center">
             <v-icon small class="mr-2" @click="updateItem(item)"
               >mdi-pencil</v-icon
             >
@@ -30,56 +47,53 @@
         <v-card-title>この項目を削除してもよろしいですか？</v-card-title>
         <v-card-actions>
           <v-spacer />
+          <v-btn color="red darken-1" text @click="deleteItemAction"
+            >削除</v-btn
+          >
           <v-btn color="blue darken-1" text @click="closeDialogDelete"
             >キャンセル</v-btn
           >
-          <v-btn color="blue darken-1" text @click="deleteItemAction"
-            >削除</v-btn
-          >
-          <v-spacer />
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-dialog v-model="dialogEdit" max-width="90%">
+    <v-dialog v-model="dialogEdit" max-width="100%">
       <v-card>
         <v-card-title>
           <span class="text-h5">{{ dialogTitle }}</span>
+          <v-spacer />
+          <!-- <v-btn
+            v-if="editIndex > -1"
+            color="red darken-1"
+            text
+            small
+            class="pr-8"
+            @click="deleteDialogEdit"
+            ><v-icon>mdi-delete</v-icon></v-btn
+          > -->
+          <v-btn
+            color="blue darken-1"
+            class="px-1"
+            text
+            small
+            @click="saveDialogEdit"
+            ><v-icon>mdi-content-save</v-icon></v-btn
+          >
+          <v-btn
+            color="blue darken-1"
+            class="px-1"
+            text
+            small
+            @click="closeDialogEdit"
+            ><v-icon>mdi-close-outline</v-icon></v-btn
+          >
         </v-card-title>
         <v-card-text>
-          <v-row>
-            <v-col cols="12" sm="6">
+          <v-row dense>
+            <v-col cols="12">
               <v-text-field
                 v-model="editItem.title"
                 label="タイトル"
               ></v-text-field>
-            </v-col>
-            <v-col cols="12" sm="3">
-              <v-select
-                v-model="editItem.category"
-                label="カテゴリ"
-                item-text="name"
-                item-value="name"
-                :items="categoryItems"
-              ></v-select>
-            </v-col>
-            <v-col cols="12" sm="3">
-              <v-select
-                v-model="editItem.categoryDetail"
-                label="カテゴリ詳細"
-                item-text="name"
-                item-value="name"
-                :items="categoryDetailItems"
-              ></v-select>
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>
-              <mavon-editor
-                v-model="editItem.content"
-                style="height: 100%"
-                language="ja"
-                defaultOpen="other"
-              ></mavon-editor>
             </v-col>
           </v-row>
           <v-row>
@@ -90,10 +104,31 @@
                 language="ja"
                 @change="changeEditor"
                 defaultOpen="other"
+                :toolbars="toolbars"
               ></mavon-editor>
             </v-col>
           </v-row>
           <v-row>
+            <v-col cols="12" sm="6">
+              <v-select
+                v-model="editItem.category"
+                label="カテゴリ"
+                item-text="name"
+                item-value="name"
+                :items="categoryItems"
+              ></v-select>
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-select
+                v-model="editItem.categoryDetail"
+                label="カテゴリ詳細"
+                item-text="name"
+                item-value="name"
+                :items="categoryDetailItems"
+              ></v-select>
+            </v-col>
+          </v-row>
+          <!-- <v-row>
             <v-col>
               {{ mdText }}
             </v-col>
@@ -102,16 +137,8 @@
             <v-col>
               <div v-html="htmlText" />
             </v-col>
-          </v-row>
+          </v-row> -->
         </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn color="blue darken-1" text @click="closeDialogEdit"
-            >キャンセル</v-btn
-          >
-          <v-btn color="blue darken-1" text @click="saveDialogEdit">保存</v-btn>
-          <v-spacer />
-        </v-card-actions>
       </v-card>
     </v-dialog>
   </div>
@@ -147,36 +174,68 @@ export default {
     mdText: "",
     htmlText: "",
     headers: [
-      {
-        text: "ステータス",
-        value: "completeView",
-        align: "center",
-        width: "120px",
-      },
-      {
-        text: "カテゴリ",
-        value: "categoryView",
-        align: "left",
-        width: "200px",
-      },
+      // {
+      //   text: "ステータス",
+      //   value: "completeView",
+      //   align: "center",
+      //   width: "120px",
+      // },
+      // {
+      //   text: "カテゴリ",
+      //   value: "categoryView",
+      //   align: "left",
+      //   width: "200px",
+      // },
       {
         text: "タイトル",
         value: "title",
         align: "left",
-        width: "700px",
+        width: "100px",
       },
-      {
-        text: "更新日時",
-        value: "updatedAt",
-        align: "center",
-        width: "250px",
-      },
-      {
-        text: "",
-        value: "actions",
-        align: "center",
-      },
+      // {
+      //   text: "更新日時",
+      //   value: "updatedAt",
+      //   align: "center",
+      //   width: "250px",
+      // },
+      // {
+      //   text: " ",
+      //   value: "actions",
+      //   align: "center",
+      //   width: "100px",
+      // },
     ],
+    toolbars: {
+      underline: true,
+      strikethrough: true,
+      mark: true,
+      superscript: false,
+      subscript: false,
+      quote: true,
+      link: true,
+      imagelink: true,
+      code: true,
+      table: true,
+      header: true,
+      bold: true,
+      italic: false,
+      ol: true,
+      ul: true,
+      fullscreen: false,
+      readmodel: false,
+      htmlcode: false,
+      help: false,
+      undo: false,
+      redo: false,
+      trash: false,
+      save: false,
+      navigation: true,
+      alignleft: true,
+      aligncenter: true,
+      alignright: true,
+      subfield: true,
+      preview: true,
+    },
   }),
   computed: {
     dialogTitle() {
@@ -225,15 +284,11 @@ export default {
         categoryDetail: [this.editItem.categoryDetail],
       };
       await axios
-        .post(
-          "https://takamori-c.microcms.io/api/v1/favorites",
-          params,
-          {
-            headers: {
-              "X-MICROCMS-API-KEY": process.env.VUE_APP_X_MICROCMS_API_KEY,
-            },
-          }
-        )
+        .post("https://takamori-c.microcms.io/api/v1/favorites", params, {
+          headers: {
+            "X-MICROCMS-API-KEY": process.env.VUE_APP_X_MICROCMS_API_KEY,
+          },
+        })
         .catch(function (e) {
           self.errors = e;
         })
@@ -281,6 +336,8 @@ export default {
       this.dialogEdit = true;
     },
     updateItem(item) {
+      // eslint-disable-next-line no-debugger
+      //debugger;v-
       this.editIndex = this.items.indexOf(item);
       this.editItem = Object.assign({}, item);
       this.dialogEdit = true;
@@ -291,6 +348,11 @@ export default {
       this.editItem.deletedAt = new Date();
       this.dialogDelete = true;
     },
+    deleteDialogEdit() {
+      this.editItem = Object.assign(this.items[this.editIndex], this.editItem);
+      this.editItem.deletedAt = new Date();
+      this.dialogDelete = true;
+    },
     closeDialogDelete() {
       this.dialogDelete = false;
     },
@@ -298,6 +360,7 @@ export default {
       this.items.splice(this.editIndex, 1);
       await this.patchItems();
       this.closeDialogDelete();
+      this.closeDialogEdit();
     },
     closeDialogEdit() {
       this.dialogEdit = false;

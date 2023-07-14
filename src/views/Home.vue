@@ -19,7 +19,7 @@
         </v-toolbar>
         <v-divider />
       </template>
-      <template v-slot:item.title="{ item }">
+      <template v-slot:[`item.title`]="{ item }">
         <v-row>
           <v-col cols="10" sm="11" class="text-left">
             {{ item.title }}
@@ -29,7 +29,7 @@
           </v-col>
         </v-row>
       </template>
-      <template v-slot:item.actions="{ item }">
+      <template v-slot:[`item.actions`]="{ item }">
         <v-row>
           <v-col class="text-center">
             <v-icon small class="mr-2" @click="updateItem(item)"
@@ -383,3 +383,9 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+:deep(.v-data-table__mobile-row__cell) {
+  width: 100% !important;
+}
+</style>

@@ -42,6 +42,7 @@
         </v-row>
       </template>
     </v-data-table>
+    <v-divider />
     <v-dialog v-model="dialogDelete" max-width="500px">
       <v-card>
         <v-card-title>この項目を削除してもよろしいですか？</v-card-title>
@@ -105,6 +106,7 @@
                 @change="changeEditor"
                 defaultOpen="other"
                 :toolbars="toolbars"
+                :subfield="false"
               ></mavon-editor>
             </v-col>
           </v-row>
@@ -206,7 +208,7 @@ export default {
       // },
     ],
     toolbars: {
-      underline: true,
+      underline: false,
       strikethrough: true,
       mark: true,
       superscript: false,
@@ -215,12 +217,12 @@ export default {
       link: true,
       imagelink: true,
       code: true,
-      table: true,
-      header: true,
-      bold: true,
+      table: false,
+      header: false,
+      bold: false,
       italic: false,
-      ol: true,
-      ul: true,
+      ol: false,
+      ul: false,
       fullscreen: false,
       readmodel: false,
       htmlcode: false,
@@ -233,7 +235,7 @@ export default {
       alignleft: true,
       aligncenter: true,
       alignright: true,
-      subfield: true,
+      subfield: false,
       preview: true,
     },
   }),

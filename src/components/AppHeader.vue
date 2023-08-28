@@ -17,6 +17,7 @@
       <v-btn icon class="ma-2" to="/search">
         <v-icon>mdi-magnify</v-icon>
       </v-btn>
+      <v-btn outlined to="/login"> ログイン </v-btn>
     </v-app-bar>
     <v-navigation-drawer v-model="drawer" dark app clipped>
       <v-list nav dense>

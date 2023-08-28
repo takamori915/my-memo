@@ -6,7 +6,7 @@
       :headers="headers"
       :items="items"
       hide-default-header
-      hide-default-footer
+      disable-sort
       @click:row="updateItem"
     >
       <template v-slot:top>
@@ -104,7 +104,7 @@
                 style="height: 600px"
                 language="ja"
                 @change="changeEditor"
-                defaultOpen="other"
+                defaultOpen="preview"
                 :toolbars="toolbars"
                 :subfield="false"
               ></mavon-editor>
@@ -251,12 +251,19 @@ export default {
     async getItems() {
       this.isLoading = true;
       const filter = "filters=deletedAt[not_exists]";
+      const limit = "limit=100";
       const response = await axios
-        .get("https://takamori-c.microcms.io/api/v1/favorites?" + filter, {
-          headers: {
-            "X-MICROCMS-API-KEY": process.env.VUE_APP_X_MICROCMS_API_KEY,
-          },
-        })
+        .get(
+          "https://takamori-c.microcms.io/api/v1/favorites?" +
+            filter +
+            "&" +
+            limit,
+          {
+            headers: {
+              "X-MICROCMS-API-KEY": process.env.VUE_APP_X_MICROCMS_API_KEY,
+            },
+          }
+        )
         .then((res) => {
           res.data.contents.forEach((data) => {
             data.category = data.category[0];
